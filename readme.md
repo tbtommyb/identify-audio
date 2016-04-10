@@ -25,5 +25,5 @@ rgument. Before building it you will need to put in the directory the header and
 6. Create a "licence.txt" file containing the licence information provided in your online Gracenote account.
 7. In the script there are a couple of user-defined details for the Gracenote API. Fill in your details. It's easiest to keep the sample executable and licence.txt in the same directory but it's up to you. You will need the architecture-appropriate library and header files in the directory with the executable.
 8. You can also change the directory to which the script will write temp files. By default it's ~/Music/temp. The script will delete files once it's used them in any case.
-9. When you are playing a track you want to identify, just type "python identify.py" from the directory. It will try a few times to identify the track and give the album and track names if it finds them.
+9. When you are playing a track you want to identify, just type `python identify.py` from the directory. It will try a few times to identify the track and give the album and track names if it finds them.
 10. To make the script available from anywhere in the console, move "identify.py" to "/usr/local/bin". You'll need to update the paths to the Gracenote executable and licence.txt files.

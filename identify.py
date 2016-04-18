@@ -79,7 +79,7 @@ def write_file(frames, path, format, channels, rate):
 
 def query_gracenote(sound_path):
 	proc = subprocess.Popen([APP_PATH, CLIENT_ID.split("-")[0], CLIENT_ID.split("-")[1], LICENCE_PATH,
-		"online", sound_path], stdout=subprocess.PIPE)
+		sound_path], stdout=subprocess.PIPE)
 	count = 0
 	for line in iter(proc.stdout.readline, ""):
 		if "name:" in line:

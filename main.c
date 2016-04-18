@@ -1,3 +1,4 @@
+
 /*
  * Copyright (c) 2000 Gracenote.
  *
@@ -693,17 +694,16 @@ _display_track_gdo(
 {
 	gnsdk_error_t      error     = GNSDK_SUCCESS;
 	gnsdk_gdo_handle_t title_gdo = GNSDK_NULL;
-	gnsdk_cstr_t       value_1     = GNSDK_NULL;
-	gnsdk_cstr_t       value_2     = GNSDK_NULL;
+	gnsdk_cstr_t       value     = GNSDK_NULL;
 
 	/* Track Title */
 	error = gnsdk_manager_gdo_child_get( track_gdo, GNSDK_GDO_CHILD_TITLE_OFFICIAL, 1, &title_gdo );
 	if (GNSDK_SUCCESS == error)
 	{
-		error = gnsdk_manager_gdo_value_get( title_gdo, GNSDK_GDO_VALUE_DISPLAY, 1, &value_1 );
+		error = gnsdk_manager_gdo_value_get( title_gdo, GNSDK_GDO_VALUE_DISPLAY, 1, &value );
 		if (GNSDK_SUCCESS == error)
 		{
-			printf( "%26s %s\n", "Title:", value_1 );
+			printf( "%26s %s\n", "Track name:", value );
 		}
 		else
 		{
@@ -715,57 +715,55 @@ _display_track_gdo(
 	{
 		_display_last_error(__LINE__);
 	}
-	
-	/* Track number on album. */
-	error = gnsdk_manager_gdo_value_get( track_gdo, GNSDK_GDO_VALUE_TRACK_NUMBER, 1, &value_1 );
-	if (GNSDK_SUCCESS == error)
-	{
-		printf( "%26s %s\n", "Track number:", value_1 );
-	}
-	else
-	{
-		_display_last_error(__LINE__);
-	}
 
-	/* Track duration. */
-	error = gnsdk_manager_gdo_value_get( track_gdo, GNSDK_GDO_VALUE_DURATION, 1, &value_1 );
+}  /* _display_track_gdo() */
+
+/***************************************************************************
+ *
+ *    _DISPLAY_ARTIST_GDO
+ *
+ ***************************************************************************/
+static void
+_display_artist_gdo(
+	gnsdk_gdo_handle_t album_gdo
+	)
+{
+	gnsdk_error_t      error           = GNSDK_SUCCESS;
+	gnsdk_gdo_handle_t artist_gdo      = GNSDK_NULL;
+	gnsdk_gdo_handle_t artist_name_gdo = GNSDK_NULL;
+	gnsdk_cstr_t       value           = GNSDK_NULL;
+
+
+	/* Track Title */
+	error = gnsdk_manager_gdo_child_get( album_gdo, GNSDK_GDO_CHILD_ARTIST, 1, &artist_gdo );
 	if (GNSDK_SUCCESS == error)
 	{
-		error = gnsdk_manager_gdo_value_get( track_gdo, GNSDK_GDO_VALUE_DURATION_UNITS, 1, &value_2 );
+		error = gnsdk_manager_gdo_child_get( artist_gdo, GNSDK_GDO_CHILD_NAME_OFFICIAL, 1, &artist_name_gdo );
 		if (GNSDK_SUCCESS == error)
 		{
-			printf( "%26s %s %s\n", "Track duration:", value_1, value_2 );
+			error = gnsdk_manager_gdo_value_get( artist_name_gdo, GNSDK_GDO_VALUE_DISPLAY, 1, &value );
+			if (GNSDK_SUCCESS == error)
+			{
+				printf( "%16s %s\n", "Artist name:", value );
+			}
+			else
+			{
+				_display_last_error(__LINE__);
+			}
 		}
 		else
 		{
 			_display_last_error(__LINE__);
 		}
+		gnsdk_manager_gdo_release(artist_gdo);
+		gnsdk_manager_gdo_release(artist_name_gdo);
 	}
 	else
 	{
 		_display_last_error(__LINE__);
 	}
 
-	/* Position in track where the fingerprint matched. */
-	error = gnsdk_manager_gdo_value_get( track_gdo, GNSDK_GDO_VALUE_MATCH_POSITION_MS, 1, &value_1 );
-	if (GNSDK_SUCCESS == error)
-	{
-		printf( "%26s %s ms\n", "Match position:", value_1 );
-	}
-	else
-	{
-		_display_last_error(__LINE__);
-	}
-
-	/* Duration of the matched fingerprint. */
-	error = gnsdk_manager_gdo_value_get( track_gdo, GNSDK_GDO_VALUE_MATCH_DURATION_MS, 1, &value_1 );
-	if (GNSDK_SUCCESS == error)
-	{
-		printf( "%26s %s ms\n", "Match duration:", value_1 );
-	}
-
-}  /* _display_track_gdo() */
-
+}  /* _display_artist_gdo() */
 
 /***************************************************************************
  *
@@ -777,10 +775,10 @@ _display_album_gdo(
 	gnsdk_gdo_handle_t album_gdo
 	)
 {
-	gnsdk_error_t      error     = GNSDK_SUCCESS;
-	gnsdk_gdo_handle_t title_gdo = GNSDK_NULL;
-	gnsdk_gdo_handle_t track_gdo = GNSDK_NULL;
-	gnsdk_cstr_t       value     = GNSDK_NULL;
+	gnsdk_error_t      error           = GNSDK_SUCCESS;
+	gnsdk_gdo_handle_t title_gdo       = GNSDK_NULL;
+	gnsdk_gdo_handle_t track_gdo       = GNSDK_NULL;
+	gnsdk_cstr_t       value           = GNSDK_NULL;
 	
 	
 	/* Album Title */
@@ -790,13 +788,12 @@ _display_album_gdo(
 		error = gnsdk_manager_gdo_value_get( title_gdo, GNSDK_GDO_VALUE_DISPLAY, 1, &value );
 		if (GNSDK_SUCCESS == error)
 		{
-			printf( "%16s %s\n", "Title:", value );
-			
+			printf( "%16s %s\n", "Album name:", value );
+
 			/* Matched track number. */
 			error = gnsdk_manager_gdo_value_get( album_gdo, GNSDK_GDO_VALUE_TRACK_MATCHED_NUM, 1, &value );
 			if (GNSDK_SUCCESS == error)
 			{
-				printf( "%16s %s\n", "Matched Track:", value );
 				error = gnsdk_manager_gdo_child_get( album_gdo, GNSDK_GDO_CHILD_TRACK_MATCHED, 1, &track_gdo );
 				if (GNSDK_SUCCESS == error)
 				{
@@ -1057,6 +1054,7 @@ _musicidstream_result_available_callback(
 				printf( "%16s\n", "Album result: 1");
 
 				_display_album_gdo(album_gdo);
+				_display_artist_gdo(album_gdo);
 				gnsdk_manager_gdo_release(album_gdo);
 			}
 		}

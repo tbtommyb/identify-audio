@@ -5,6 +5,7 @@ import wave
 import time
 import subprocess
 import os.path
+import json
 
 CHUNK = 1024
 FORMAT = pyaudio.paInt16
@@ -78,16 +79,9 @@ def write_file(frames, path, format, channels, rate):
 	return path
 
 def query_gracenote(sound_path):
-	proc = subprocess.Popen([APP_PATH, CLIENT_ID.split("-")[0], CLIENT_ID.split("-")[1], LICENCE_PATH,
-		sound_path], stdout=subprocess.PIPE)
-	count = 0
-	for line in iter(proc.stdout.readline, ""):
-		if "name:" in line:
-			print line.strip()
-			count += 1
-	if count == 0:
-		print "The track was not identified."
-	return count
+	out = subprocess.check_output([APP_PATH, CLIENT_ID.split("-")[0],
+		CLIENT_ID.split("-")[1], LICENCE_PATH, sound_path])
+	return json.loads(out)
 
 def main():
 	output = get_current_output()
@@ -102,17 +96,19 @@ def main():
 				write_file(input_audio, COMPLETE_NAME, FORMAT, CHANNELS, RATE)
 			except IOError:
 				print "Error writing the sound file."
-			if query_gracenote(COMPLETE_NAME):
-				break
-			else:
+			resp = query_gracenote(COMPLETE_NAME)
+			if resp["result"] == None:
+				print "The track was not identified."
 				length += 3
 				attempts += 1
 				if attempts == 3:
 					break
 				print "Retrying..."
+			else:
+				print json.dumps(resp["result"], indent=4, separators=(""," - "))
+				break
 	else:
 		raise RuntimeError("Couldn't switch to multi-output device.")
-
 	p.terminate()
 	os.remove(COMPLETE_NAME)
 	if subprocess.call(["SwitchAudioSource", "-s", output]) == 0:

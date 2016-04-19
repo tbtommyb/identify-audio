@@ -1,6 +1,9 @@
 
 /*
  * Copyright (c) 2000 Gracenote.
+ * Amendments by Tom Barrett
+ * Thanks to Ben Bowler (https://github.com/ZeroOneStudio/gracenote-cli)
+ * for JSON code
  */
 
 /*
@@ -95,7 +98,6 @@ main(int argc, char* argv[])
         client_id_tag = argv[2];
         license_path  = argv[3];
         s_audio_file = argv[4];
-        printf("s_audio_file: %s\n", argv[4]);
 
         /* GNSDK initialization */
         rc = _init_gnsdk(
@@ -280,7 +282,6 @@ _display_gnsdk_product_info(void)
     );
 
 }  /* _display_gnsdk_product_info() */
-
 
 /******************************************************************
  *
@@ -541,7 +542,7 @@ _display_track_gdo(
         error = gnsdk_manager_gdo_value_get( title_gdo, GNSDK_GDO_VALUE_DISPLAY, 1, &value );
         if (GNSDK_SUCCESS == error)
         {
-            printf( "%26s %s\n", "Track name:", value );
+            printf( " '%s': '%s',\n", "track_name", value );
         }
         else
         {
@@ -582,7 +583,7 @@ _display_artist_gdo(
             error = gnsdk_manager_gdo_value_get( artist_name_gdo, GNSDK_GDO_VALUE_DISPLAY, 1, &value );
             if (GNSDK_SUCCESS == error)
             {
-                printf( "%16s %s\n", "Artist name:", value );
+                printf( " '%s': '%s' \n }\n}", "artist_name", value ); /* close json */
             }
             else
             {
@@ -618,6 +619,9 @@ _display_album_gdo(
     gnsdk_gdo_handle_t track_gdo       = GNSDK_NULL;
     gnsdk_cstr_t       value           = GNSDK_NULL;
     
+
+    /* Begin json structure */
+    printf("{ 'result': {\n");
     
     /* Album Title */
     error = gnsdk_manager_gdo_child_get( album_gdo, GNSDK_GDO_CHILD_TITLE_OFFICIAL, 1, &title_gdo );
@@ -626,7 +630,7 @@ _display_album_gdo(
         error = gnsdk_manager_gdo_value_get( title_gdo, GNSDK_GDO_VALUE_DISPLAY, 1, &value );
         if (GNSDK_SUCCESS == error)
         {
-            printf( "%16s %s\n", "Album name:", value );
+            printf( " '%s': '%s', \n", "album_name", value );
 
             /* Matched track number. */
             error = gnsdk_manager_gdo_value_get( album_gdo, GNSDK_GDO_VALUE_TRACK_MATCHED_NUM, 1, &value );
@@ -828,12 +832,10 @@ _musicidstream_identifying_status_callback(
     gnsdk_bool_t*                            pb_abort
     )
 {
-    printf("\n%s: status = %d\n\n", __FUNCTION__, status);
     /* This sample chooses to stop the audio processing when the identification
     ** is complete so it stops feeding in audio */
     if (status == gnsdk_musicidstream_identifying_ended)
     {
-        printf("\n%s aborting\n\n", __FUNCTION__);
         *pb_abort = GNSDK_TRUE;
     }
 

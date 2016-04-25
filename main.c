@@ -146,8 +146,7 @@ _display_last_error(
     /* Error_info will never be GNSDK_NULL.
      * The SDK will always return a pointer to a populated error info structure.
      */
-    printf(
-        "\nerror from: %s()  [on line %d]\n\t0x%08x %s\n",
+    printf("{\"error\": \"error from: %s()  [on line %d]\n\t0x%08x %s\"}",
         error_info->error_api,
         line_num,
         error_info->error_code,
@@ -569,7 +568,7 @@ _display_artist_gdo(
     gnsdk_cstr_t       value           = GNSDK_NULL;
 
 
-    /* Artist Title */
+    /* Track Title */
     error = gnsdk_manager_gdo_child_get( album_gdo, GNSDK_GDO_CHILD_ARTIST, 1, &artist_gdo );
     if (GNSDK_SUCCESS == error)
     {
@@ -685,7 +684,7 @@ _process_audio(
     p_file = fopen(s_audio_file, "rb");
     if (p_file == NULL)
     {
-        printf("\n\n!!!!Failed to open input file: %s!!!\n\n", s_audio_file);
+        printf("{\"error\": \"Failed to open input file: %s\"}", s_audio_file);
         return -1;
     }
 
@@ -908,7 +907,7 @@ _musicidstream_completed_with_error_callback(
 {
     /* an error occurred during identification */
     printf(
-        "\nerror from: %s()  [error callback]\n\t0x%08x %s",
+        "{\"error\": \"%s()  [error callback] 0x%08x %s\"}",
         p_error_info->error_api,
         p_error_info->error_code,
         p_error_info->error_description

@@ -23,7 +23,7 @@ Installation for OS X
 4. Register for a Gracenote Web API account and download their SDK.
 5. Replace "samples/musicid_stream/main.c" in the SDK with the "main.c" in this repository. It has been changed to output in JSON and take a file input. Before building it you will need to put in the directory the header and link files for your architecture (from "/lib/" and "/include" in the SDK directory). 64bit users need to use `make ARCH=x86_64`, or can just use the executable files in the 'build' directory. If you do so, providing your own Gracenote IDs is optional (though you'll still need to provide the licence file, below). Be sure to keep the dylib files in the same directory.
 6. Create a "licence.txt" file containing the licence information provided in your online Gracenote account.
-7. The script will look for configuration details in a .identifyaudio.rc file in your home directly (by default). You can edit the script to provide the details in the script itself or create the configuration file with the following format:
+7. The script will look for configuration details in a .identifyaudio.rc file in your home directly (by default). You can edit the script to provide the details in the script itself or create the configuration file with the following format:  
 APP_PATH /path/to/sample/executable  
 LICENCE_PATH /path/to/licence.txt  
 CLIENT_ID Gracenote_client_id  

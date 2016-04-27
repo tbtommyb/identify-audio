@@ -35,7 +35,7 @@ DISCOGS_USERNAME your_user_name
 DISCOGS_REQUEST_TOKEN_URL https://api.discogs.com/oauth/request_token  
 DISCOGS_ACCESS_TOKEN_URL https://api.discogs.com/oauth/access_token  
 DISCOGS_AUTHORIZE_URL https://www.discogs.com/oauth/authorize  
-DISCOGS_BASE_URL https://api.discogs.com/
+DISCOGS_BASE_URL https://api.discogs.com/  
 (that's the name followed by a single space followed by the value followed by a newline).
 8. You can also change the directory to which the script will write temp files. By default it's ~/Music/temp. The script will delete files once it's used them in any case.
 9. When you are playing a track you want to identify, just type `python identify.py` from the directory. It will try a few times to identify the track and give the album and track names if it finds them.

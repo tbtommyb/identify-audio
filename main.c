@@ -13,7 +13,7 @@
  *  of an audio stream
  *
  *  Command-line Syntax:
- *  sample <client_id> <client_id_tag> <license> <sound_file>
+ *  sample <license> <sound_file> <client_id> <client_id_tag>
  */
 
 /* GNSDK headers
@@ -86,19 +86,26 @@ int
 main(int argc, char* argv[])
 {
     gnsdk_user_handle_t user_handle        = GNSDK_NULL;
-    const char*         client_id          = NULL;
-    const char*         client_id_tag      = NULL;
+    const char*         client_id          = "id"; /* initialised in compiled file but can be overwritten by argument */
+    const char*         client_id_tag      = "tag"; /* likewise */
     const char*         client_app_version = "0.1.0.0";
     const char*         license_path       = NULL;
     int                 rc                 = 0;
 
+    if (argc == 3)
+    {
+        license_path = argv[1];
+        s_audio_file = argv[2];
+    }
     if (argc == 5)
     {
-        client_id     = argv[1];
-        client_id_tag = argv[2];
-        license_path  = argv[3];
-        s_audio_file = argv[4];
-
+        license_path  = argv[1];
+        s_audio_file  = argv[2];
+        client_id     = argv[3];
+        client_id_tag = argv[4];
+    }
+    if (argc == 3 || argc == 5)
+    {
         /* GNSDK initialization */
         rc = _init_gnsdk(
             client_id,
@@ -109,23 +116,21 @@ main(int argc, char* argv[])
             );
         if (0 == rc)
         {
-            /* Perform a sample audio stream query */
+            /* Sample the audio */
             _do_sample_musicid_stream(user_handle);
 
             /* Clean up and shutdown */
             _shutdown_gnsdk(user_handle);
         }
-    }
-    if (argc != 5)
+    } else
     {
-        printf("\nUsage:\n%s clientid clientidtag license\n", argv[0]);
+        printf("\nUsage:\n%s clientid clientidtag license soundfile\n", argv[0]);
         rc = -1;
     }
 
     return rc;
 
 }  /* main() */
-
 
 /******************************************************************
  *
@@ -135,38 +140,22 @@ main(int argc, char* argv[])
  *
  *****************************************************************/
 static void
-_display_last_error(
-    int line_num
-    )
+_display_last_error()
 {
     /* Get the last error information from the SDK */
     const gnsdk_error_info_t* error_info = gnsdk_manager_error_info();
 
-
-    /* Error_info will never be GNSDK_NULL.
-     * The SDK will always return a pointer to a populated error info structure.
-     */
-    printf("{\"error\": \"error from: %s()  [on line %d]\n\t0x%08x %s\"}",
-        error_info->error_api,
-        line_num,
-        error_info->error_code,
+    printf("{\"error\": \"%s\"}",
         error_info->error_description
         );
 
 } /* _display_last_error() */
-
 
 /******************************************************************
  *
  *    _GET_USER_HANDLE
  *
  *    Load existing user handle, or register new one.
- *
- *    GNSDK requires a user handle instance to perform queries.
- *    User handles encapsulate your Gracenote provided Client ID
- *    which is unique for your application. User handles are
- *    registered once with Gracenote then must be saved by
- *    your application and reused on future invocations.
  *
  *****************************************************************/
 static int
@@ -183,13 +172,24 @@ _get_user_handle(
     gnsdk_char_t        serialized_user_buf[1024] = {0};
     gnsdk_bool_t        b_localonly               = GNSDK_FALSE;
     gnsdk_error_t       error                     = GNSDK_SUCCESS;
+    const char*         user_home_path            = getenv("HOME");
     FILE*               file                      = NULL;
     int                 rc                        = 0;
+    char*               user_file_path            = NULL;
     
     user_reg_mode = GNSDK_USER_REGISTER_MODE_ONLINE;
 
+    if (user_home_path)
+    {
+        user_file_path = malloc(strlen(user_home_path) + strlen("/.gracenote.txt") + 1);
+        strcpy(user_file_path, user_home_path);
+        strcat(user_file_path, "/.gracenote.txt");
+    } else
+    {
+        user_file_path = "gracenote.txt";
+    }
     /* Do we have a user saved locally? */
-    file = fopen("user.txt", "r");
+    file = fopen(user_file_path, "r");
     if (file)
     {
         fgets(serialized_user_buf, sizeof(serialized_user_buf), file);
@@ -212,7 +212,7 @@ _get_user_handle(
         
         if (GNSDK_SUCCESS != error)
         {
-            _display_last_error(__LINE__);
+            _display_last_error();
         }
     }
 
@@ -233,7 +233,7 @@ _get_user_handle(
         if (GNSDK_SUCCESS == error)
         {
             /* save newly registered user for use next time */
-            file = fopen("user.txt", "w");
+            file = fopen(user_file_path, "w");
             if (file)
             {
                 fputs(serialized_user, file);
@@ -251,7 +251,7 @@ _get_user_handle(
     }
     else
     {
-        _display_last_error(__LINE__);
+        _display_last_error();
         rc = -1;
     }
 
@@ -261,29 +261,9 @@ _get_user_handle(
 
 /******************************************************************
  *
- *    _DISPLAY_GNSDK_PRODUCT_INFO
- *
- *    Display product version information
- *
- ******************************************************************/
-static void
-_display_gnsdk_product_info(void)
-{
-    /* Display GNSDK Version infomation */
-/*    printf(
-        "\nGNSDK Product Version    : %s \t(built %s)\n",
-        gnsdk_manager_get_product_version(),
-        gnsdk_manager_get_build_date()
-    );*/
-
-}  /* _display_gnsdk_product_info() */
-
-/******************************************************************
- *
  *    _ENABLE_LOGGING
  *
- *  Enable logging for the SDK. This helps
- *  Gracenote debug your app, if necessary.
+ *  Enable logging for the SDK.
  *
  ******************************************************************/
 static int
@@ -302,7 +282,7 @@ _enable_logging(void)
         );
     if (GNSDK_SUCCESS != error)
     {
-        _display_last_error(__LINE__);
+        _display_last_error();
         rc = -1;
     }
 
@@ -315,10 +295,7 @@ _enable_logging(void)
  *
  *    _SET_LOCALE
  *
- *  Set application locale. Note that this is only necessary if you are using
- *  locale-dependant fields such as genre, mood, origin, era, etc. Your app
- *  may or may not be accessing locale_dependent fields, but it does not hurt
- *  to do this initialization as a matter of course.
+ *  Set application locale
  *
  ****************************************************************************/
 static int
@@ -329,7 +306,6 @@ _set_locale(
     gnsdk_locale_handle_t locale_handle = GNSDK_NULL;
     gnsdk_error_t         error         = GNSDK_SUCCESS;
     int                   rc            = 0;
-
 
     error = gnsdk_manager_locale_load(
         GNSDK_LOCALE_GROUP_MUSIC,               /* Locale group */
@@ -349,7 +325,7 @@ _set_locale(
         error = gnsdk_manager_locale_set_group_default(locale_handle);
         if (GNSDK_SUCCESS != error)
         {
-            _display_last_error(__LINE__);
+            _display_last_error();
             rc = -1;
         }
 
@@ -360,7 +336,7 @@ _set_locale(
     }
     else
     {
-        _display_last_error(__LINE__);
+        _display_last_error();
         rc = -1;
     }
 
@@ -368,19 +344,9 @@ _set_locale(
 
 }  /* _set_locale() */
 
-
 /****************************************************************************************
  *
  *    _INIT_GNSDK
- *
- *     Initializing the GNSDK is required before any other APIs can be called.
- *     First step is to always initialize the Manager module, then use the returned
- *     handle to initialize any modules to be used by the application.
- *
- *     For this sample, we also load a locale which is used by GNSDK to provide
- *     appropriate locale-sensitive metadata for certain metadata values. Loading of the
- *     locale is done here for sample convenience but can be done at anytime in your
- *     application.
  *
  ****************************************************************************************/
 static int
@@ -397,10 +363,6 @@ _init_gnsdk(
     gnsdk_user_handle_t    user_handle   = GNSDK_NULL;
     int                    rc            = 0;
 
-
-    /* Display GNSDK Product Version Info */
-    _display_gnsdk_product_info();
-
     /* Initialize the GNSDK Manager */
     error = gnsdk_manager_initialize(
         &sdkmgr_handle,
@@ -409,7 +371,7 @@ _init_gnsdk(
         );
     if (GNSDK_SUCCESS != error)
     {
-        _display_last_error(__LINE__);
+        _display_last_error();
         return -1;
     }
 
@@ -419,24 +381,13 @@ _init_gnsdk(
         rc = _enable_logging();
     }
 
-    /* Initialize the Storage SQLite Library */
-    if (0 == rc)
-    {
-        error = gnsdk_storage_sqlite_initialize(sdkmgr_handle);
-        if (GNSDK_SUCCESS != error)
-        {
-            _display_last_error(__LINE__);
-            rc = -1;
-        }
-    }
-
     /* Initialize the DSP Library - used for generating fingerprints */
     if (0 == rc)
     {
         error = gnsdk_dsp_initialize(sdkmgr_handle);
         if (GNSDK_SUCCESS != error)
         {
-            _display_last_error(__LINE__);
+            _display_last_error();
             rc = -1;
         }
     }
@@ -447,7 +398,7 @@ _init_gnsdk(
         error = gnsdk_musicidstream_initialize(sdkmgr_handle);
         if (GNSDK_SUCCESS != error)
         {
-            _display_last_error(__LINE__);
+            _display_last_error();
             rc = -1;
         }
     }
@@ -489,13 +440,6 @@ _init_gnsdk(
  *
  *    _SHUTDOWN_GNSDK
  *
- *     When your program is terminating, or you no longer need GNSDK, you should
- *     call gnsdk_manager_shutdown(). No other shutdown operations are required.
- *     gnsdk_manager_shutdown() also shuts down all other modules, regardless
- *     of the number of times they have been initialized.
- *     You can shut down individual modules while your program is running with
- *     their dedicated shutdown functions in order to free up resources.
- *
  ***************************************************************************/
 static void
 _shutdown_gnsdk(
@@ -507,7 +451,7 @@ _shutdown_gnsdk(
     error = gnsdk_manager_user_release(user_handle);
     if (GNSDK_SUCCESS != error)
     {
-        _display_last_error(__LINE__);
+        _display_last_error();
     }
 
     /* Shutdown the Manager to shutdown all libraries */
@@ -515,12 +459,12 @@ _shutdown_gnsdk(
 
 }  /* _shutdown_gnsdk() */
 
-
 /***************************************************************************
  *
  *    _DISPLAY_TRACK_GDO
  *
  ***************************************************************************/
+
 static void
 _display_track_gdo(
     gnsdk_gdo_handle_t track_gdo
@@ -537,17 +481,17 @@ _display_track_gdo(
         error = gnsdk_manager_gdo_value_get( title_gdo, GNSDK_GDO_VALUE_DISPLAY, 1, &value );
         if (GNSDK_SUCCESS == error)
         {
-            printf("\"%s\": \"%s\",\n", "track_name", value );
+            printf("\"%s\": \"%s\",\n", "track", value );
         }
         else
         {
-            _display_last_error(__LINE__);
+            _display_last_error();
         }
         gnsdk_manager_gdo_release(title_gdo);
     }
     else
     {
-        _display_last_error(__LINE__);
+        _display_last_error();
     }
 
 }  /* _display_track_gdo() */
@@ -568,7 +512,7 @@ _display_artist_gdo(
     gnsdk_cstr_t       value           = GNSDK_NULL;
 
 
-    /* Track Title */
+    /* Artist Title */
     error = gnsdk_manager_gdo_child_get( album_gdo, GNSDK_GDO_CHILD_ARTIST, 1, &artist_gdo );
     if (GNSDK_SUCCESS == error)
     {
@@ -578,23 +522,23 @@ _display_artist_gdo(
             error = gnsdk_manager_gdo_value_get( artist_name_gdo, GNSDK_GDO_VALUE_DISPLAY, 1, &value );
             if (GNSDK_SUCCESS == error)
             {
-                printf( "\"%s\": \"%s\"\n}\n}", "artist_name", value ); /* close json */
+                printf( "\"%s\": \"%s\"\n}\n}", "artist", value ); /* close json */
             }
             else
             {
-                _display_last_error(__LINE__);
+                _display_last_error();
             }
         }
         else
         {
-            _display_last_error(__LINE__);
+            _display_last_error();
         }
         gnsdk_manager_gdo_release(artist_gdo);
         gnsdk_manager_gdo_release(artist_name_gdo);
     }
     else
     {
-        _display_last_error(__LINE__);
+        _display_last_error();
     }
 
 }  /* _display_artist_gdo() */
@@ -625,7 +569,7 @@ _display_album_gdo(
         error = gnsdk_manager_gdo_value_get( title_gdo, GNSDK_GDO_VALUE_DISPLAY, 1, &value );
         if (GNSDK_SUCCESS == error)
         {
-            printf( "\"%s\": \"%s\",\n", "album_name", value );
+            printf( "\"%s\": \"%s\",\n", "album", value );
 
             /* Matched track number. */
             error = gnsdk_manager_gdo_value_get( album_gdo, GNSDK_GDO_VALUE_TRACK_MATCHED_NUM, 1, &value );
@@ -639,23 +583,23 @@ _display_album_gdo(
                 }
                 else
                 {
-                    _display_last_error(__LINE__);
+                    _display_last_error();
                 }
             }
             else
             {
-                _display_last_error(__LINE__);
+                _display_last_error();
             }
         }
         else
         {
-            _display_last_error(__LINE__);
+            _display_last_error();
         }
         gnsdk_manager_gdo_release(title_gdo);
     }
     else
     {
-        _display_last_error(__LINE__);
+        _display_last_error();
     }
     
 }  /* _display_album_gdo() */
@@ -695,15 +639,14 @@ _process_audio(
         return -1;
     }
 
-    /* initialize the fingerprinter
-       Note: The sample file shipped is a 44100Hz 16-bit stereo (2 channel) wav file */
+    /* initialize the fingerprinter */
     error = gnsdk_musicidstream_channel_audio_begin(
         channel_handle,
         44100, 16, 2
         );
     if (GNSDK_SUCCESS != error)
     {
-        _display_last_error(__LINE__);
+        _display_last_error();
         fclose(p_file);
         return -1;
     }
@@ -721,7 +664,7 @@ _process_audio(
     error = gnsdk_musicidstream_channel_identify(channel_handle);
     if (GNSDK_SUCCESS != error)
     {
-        _display_last_error(__LINE__);
+        _display_last_error();
         fclose(p_file);
         return -1;
     }
@@ -739,7 +682,7 @@ _process_audio(
         {
             if (GNSDKERR_SEVERE(error)) /* 'aborted' warnings could come back from write which should be expected */
             {
-                _display_last_error(__LINE__);
+                _display_last_error();
             }
             rc = -1;
             break;
@@ -756,14 +699,13 @@ _process_audio(
         error = gnsdk_musicidstream_channel_audio_end(channel_handle);
         if (GNSDK_SUCCESS != error)
         {
-            _display_last_error(__LINE__);
+            _display_last_error();
         }
     }
 
     return rc;
 
 }  /* _process_audio() */
-
 
 /***************************************************************************
  *
@@ -859,7 +801,7 @@ _musicidstream_result_available_callback(
         );
     if (GNSDK_SUCCESS != error)
     {
-        _display_last_error(__LINE__);
+        _display_last_error();
     }
     else
     {
@@ -878,7 +820,7 @@ _musicidstream_result_available_callback(
                 );
             if (GNSDK_SUCCESS != error)
             {
-                _display_last_error(__LINE__);
+                _display_last_error();
             }
             else
             {
@@ -894,7 +836,6 @@ _musicidstream_result_available_callback(
     GNSDK_UNUSED(channel_handle);
 }
 
-
 /*-----------------------------------------------------------------------------
  *  _musicidstream_completed_with_error_callback
  */
@@ -907,9 +848,7 @@ _musicidstream_completed_with_error_callback(
 {
     /* an error occurred during identification */
     printf(
-        "{\"error\": \"%s()  [error callback] 0x%08x %s\"}",
-        p_error_info->error_api,
-        p_error_info->error_code,
+        "{\"error\": \"%s\"}",
         p_error_info->error_description
         );
 

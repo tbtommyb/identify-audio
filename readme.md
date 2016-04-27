@@ -12,7 +12,6 @@ This script requires:
 * [Soundflower](https://github.com/mattingalls/Soundflower) to capture audio output into an input PyAudio can use.
 * [SwitchAudioSource](https://github.com/deweller/switchaudio-osx) to programmatically switch between audio devices.
 * A [Gracenote Web API account](https://developer.gracenote.com/web-api) (it's free) and some files from their [SDK](https://developer.gracenote.com/gnsdk) in order to identify the recorded audio.
-* OR, if you are using OS X 64-bit, you should be able to use the executable in the 'build' directly without needing to create a Gracenote account.
 
 Installation for OS X
 ---------------------

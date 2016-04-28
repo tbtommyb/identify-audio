@@ -51,8 +51,7 @@ When you are playing a track you want to identify, just type `python identify.py
 
 To make the script available from anywhere in the console, move `identify.py` to `/usr/local/bin`, or add its current directory to your path. This will mean you can just use `identify.py` without having to be in a particular directory or type `python`.
 
-Flags
-=====
+### Flags
 
 The `--discogs|-d` flag enables Discogs lookup.  
 

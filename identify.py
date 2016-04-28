@@ -176,7 +176,7 @@ def write_file(frames, path, format, channels, rate):
 
 def query_gracenote(sound_path):
     # TODO - handle double quotes in the output
-    out = subprocess.check_output([config["APP_PATH"], config["LICENCE_PATH"], sound_path])
+    out = subprocess.check_output([config["APP_PATH"], sound_path])
     result = json.loads(out)
     try:
         error = result["error"]

@@ -13,7 +13,7 @@
  *  of an audio stream
  *
  *  Command-line Syntax:
- *  sample <license> <sound_file> <client_id> <client_id_tag>
+ *  sample <sound_file>
  */
 
 /* GNSDK headers
@@ -38,7 +38,7 @@ _init_gnsdk(
     const char*          client_id,
     const char*          client_id_tag,
     const char*          client_app_version,
-    const char*          license_path,
+    const char*          license_data,
     gnsdk_user_handle_t* p_user_handle
     );
 
@@ -86,32 +86,22 @@ int
 main(int argc, char* argv[])
 {
     gnsdk_user_handle_t user_handle        = GNSDK_NULL;
-    const char*         client_id          = "id"; /* initialised in compiled file but can be overwritten by argument */
-    const char*         client_id_tag      = "tag"; /* likewise */
+    const char*         client_id          = "client_id";
+    const char*         client_id_tag      = "client_id_tag";
     const char*         client_app_version = "0.1.0.0";
-    const char*         license_path       = NULL;
+    const char*         license_data       = "license";
     int                 rc                 = 0;
 
-    if (argc == 3)
+    if (argc == 2)
     {
-        license_path = argv[1];
-        s_audio_file = argv[2];
-    }
-    if (argc == 5)
-    {
-        license_path  = argv[1];
-        s_audio_file  = argv[2];
-        client_id     = argv[3];
-        client_id_tag = argv[4];
-    }
-    if (argc == 3 || argc == 5)
-    {
+        s_audio_file = argv[1];
+
         /* GNSDK initialization */
         rc = _init_gnsdk(
             client_id,
             client_id_tag,
             client_app_version,
-            license_path,
+            license_data,
             &user_handle
             );
         if (0 == rc)
@@ -124,7 +114,7 @@ main(int argc, char* argv[])
         }
     } else
     {
-        printf("\nUsage:\n%s clientid clientidtag license soundfile\n", argv[0]);
+        printf("\nUsage:\n%s soundfile\n", argv[0]);
         rc = -1;
     }
 
@@ -354,7 +344,7 @@ _init_gnsdk(
     const char*          client_id,
     const char*          client_id_tag,
     const char*          client_app_version,
-    const char*          license_path,
+    const char*          license_data,
     gnsdk_user_handle_t* p_user_handle
     )
 {
@@ -366,8 +356,8 @@ _init_gnsdk(
     /* Initialize the GNSDK Manager */
     error = gnsdk_manager_initialize(
         &sdkmgr_handle,
-        license_path,
-        GNSDK_MANAGER_LICENSEDATA_FILENAME
+        license_data,
+        GNSDK_MANAGER_LICENSEDATA_NULLTERMSTRING
         );
     if (GNSDK_SUCCESS != error)
     {

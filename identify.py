@@ -1,16 +1,16 @@
-#!/usr/bin/python
+#!/Users/thomasbarrett/coding/anaconda/bin/python
 
-import pyaudio
 import wave
 import time
 import subprocess
 import os.path
 import json
-import requests
 import argparse
 import webbrowser
 import sys
+import requests
 import keyring
+import pyaudio
 from rauth import OAuth1Service
 
 # ---------------- Config -----------------
@@ -26,15 +26,15 @@ COMPLETE_NAME = os.path.join(SAVE_PATH, WAVE_OUTPUT_FILENAME)
 CONFIG_PATH = os.path.expanduser("~") + "/.identifyaudiorc"
 
 def load_user_config(path):
-    config = {}
+    user_config = {}
     try:
         with open(path, "r") as f:
             for line in f:
                 split = line.split(" ")
-                config[str(split[0])] = str(split[1]).strip()
+                user_config[str(split[0])] = str(split[1]).strip()
     except:
         raise IOError("Unable to read config file")
-    return config
+    return user_config
 
 config = load_user_config(CONFIG_PATH)
 
@@ -77,14 +77,14 @@ def discogs_get_master(artist_name, album_name):
 
 def discogs_get_release(master_id):
     release = requests.get("https://api.discogs.com/masters/"+str(master_id)+"/versions",
-        params={"per_page": 1}
-        )
+                           params={"per_page": 1}
+                          )
     return release.json()["versions"][0]
 
 def discogs_get_oauth_session():
     access_token = keyring.get_password("system", "access_token")
     access_token_secret = keyring.get_password("system", "access_token_secret")
-    
+
     if access_token and access_token_secret:
         session = discogs.get_session((access_token, access_token_secret))
     else:
@@ -94,18 +94,18 @@ def discogs_get_oauth_session():
         log("To enable Discogs access, visit this URL in your browser: "+authorize_url)
         oauth_verifier = raw_input("Enter key: ")
         session = discogs.get_auth_session(request_token, request_token_secret,
-            method="POST",
-            data={"oauth_verifier": oauth_verifier})
+                                           method="POST",
+                                           data={"oauth_verifier": oauth_verifier})
         keyring.set_password("system", "access_token", session.access_token)
         keyring.set_password("system", "access_token_secret", session.access_token_secret)        
     return session
 
 def discogs_add_wantlist(session, username, release_id):
     r = session.put("https://api.discogs.com/users/"+username+"/wants/"+str(release_id),
-        header_auth=True,
-        headers={
-            "content-type": "application/json",
-            "user-agent": "identify-audio-v0.2"})
+                    header_auth=True,
+                    headers={
+                        "content-type": "application/json",
+                        "user-agent": "identify-audio-v0.2"})
     return r.status_code
 
 # ----------- Audio devices ---------------
@@ -207,16 +207,16 @@ def main():
             except IOError:
                 log("Error writing the sound file.")
             resp = query_gracenote(COMPLETE_NAME)
-            if resp["result"] == None:
+            if resp["result"] is None:
                 log("The track was not identified.")
                 length += 3
                 attempts += 1
-                if attempts <=2:
+                if attempts <= 2:
                     log("Retrying...")
             else:
                 match = True
         if match:
-            print json.dumps(resp["result"], indent=4, separators=(""," - "), ensure_ascii=False).encode("utf8")
+            print json.dumps(resp["result"], indent=4, separators=("", " - "), ensure_ascii=False).encode("utf8")
             if args["discogs"] or args["want"]:
                 try:
                     master = discogs_get_master(resp["result"]["artist"], resp["result"]["album"])

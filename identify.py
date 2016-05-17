@@ -1,4 +1,4 @@
-#!/Users/thomasbarrett/coding/anaconda/bin/python
+#!/usr/bin/python
 
 import wave
 import time
